@@ -1,0 +1,53 @@
+stages:
+  - build
+  - style
+  - test
+  - deploy
+
+config:
+  stage: build
+  script:
+    - cd src/cat
+    - make
+    - cp s21_cat ../artefacts/s21_cat
+    - cd ../grep
+    - make
+    - cp s21_grep ../artefacts/s21_grep
+  artifacts:
+    paths:
+      - src/artefacts/s21_cat
+      - src/artefacts/s21_grep
+    expire_in: 30 days
+  after_script:
+    - bash telegram.sh "Build"
+
+styleTest:
+  stage: style
+  script:
+    - cd src/grep
+    - make linter
+    - cd ../cat
+    - make linter
+  after_script:
+    - bash telegram.sh "Style tests"
+
+tests:
+  stage: test
+  script:
+    - cd src/cat/
+    - make
+    - cd ../grep/
+    - make
+  allow_failure: false
+  after_script:
+    - bash telegram.sh "Tests"
+
+deployTask:
+  stage: deploy
+  when: manual
+  script:
+    - chmod +x script.sh
+    - chmod +x move.sh
+    - ./script.sh
+  after_script:
+    - bash telegram.sh "Deploy"
